@@ -19,16 +19,28 @@ class ProcessPdf:
         print("Final Pdf name will be: ", output_file)
         self.output_file = output_file
 
+    def getOutputDirectory(self, data):
+        return self.temp_directory + data['checkin'].replace(r"/","")
+
+    def getOutputFile(self, data):
+        return self.getOutputDirectory(data) + "/" + self.output_file
+
+    def isOutputFileExist(self, data):
+        finalOutputFile = self.getOutputFile(data)
+        finalOutputDirectory = self.getOutputDirectory(data)
+
+        if not os.path.exists(finalOutputDirectory):
+            os.makedirs(finalOutputDirectory)
+
+        if not os.path.isfile(finalOutputFile):
+            return True
+        else:
+            return False
+
     def add_data_to_pdf(self, template_path, data):
         template = pdfrw.PdfReader(template_path)
-
-        finalOutputDirectory = self.temp_directory + data['checkin'].replace(r"/","")
-        finalOutputFile = finalOutputDirectory + "/" + self.output_file
         
-        if not os.path.isfile(finalOutputFile):
-            if not os.path.exists(finalOutputDirectory):
-                os.makedirs(finalOutputDirectory)
-        
+        if self.isOutputFileExist(data):
             for page in template.pages:
                 annotations = page['/Annots']
                 if annotations is None:
@@ -51,7 +63,9 @@ class ProcessPdf:
                             annotation.update(pdfrw.PdfDict(Ff=1))
 
             template.Root.AcroForm.update(pdfrw.PdfDict(NeedAppearances=pdfrw.PdfObject('true')))
-
+            
+            finalOutputFile = self.getOutputFile(data)
+            
             pdfrw.PdfWriter().write(finalOutputFile, template)  
 
     def encode_pdf_string(self, value, type):
@@ -124,6 +138,20 @@ class ProcessPdf:
     def massageCSVData(self, value):
         return value.replace(r" \(.*\)","")
 
+    def generateEmails(self, mailTemplate, data):
+        if self.isOutputFileExist(data):
+            with open(mailTemplate, "r") as sources:
+                lines = sources.read()
+
+            lines = lines.replace('guestName', data['guest1'])
+            lines = lines.replace('checkinDate', data['checkin'])
+            lines = lines.replace('checkOutDate', data['checkout'])
+            
+            print("generating email...")
+            with open(self.getOutputFile(data), "wt") as sources:
+                sources.write(lines)
+
+
 BASE_DIRECTORY =  os.getcwd()
 TEMPLATE_PATH = BASE_DIRECTORY + '/templates/'
 FILLED_UP_FORMS = BASE_DIRECTORY + '/filled_out_forms/'
@@ -136,7 +164,7 @@ GATEPASS_CLEANING_TEMPLATE_FILENAME = 'gate_pass_cleaning_template.pdf'
 WORK_PERMIT_CLEANING_TEMPLATE_FILENAME = 'work_permit_cleaning_template.pdf'
 GATEPASS_CLEANING_OUTPUT_FILE_NAME = 'gatepass_cleaning_'
 WORK_PERMIT_CLEANING_OUTPUT_FILE_NAME = 'workpermit_cleaning_'
-
+EMAIL_TEMPLATE = 'Email_Template.txt'
 
 csvHeader = ['Guest name', 'Start date', 'End date', 'Confirmation code']
 data = pd.read_csv(CSV_RESERVATION, skipinitialspace=True, usecols=csvHeader)
@@ -183,3 +211,6 @@ for index, guest in df.iterrows():
     healthDecPDF.add_data_to_pdf(TEMPLATE_PATH + HEALTH_DECLARATION_TEMPLATE_FILENAME, data)
     #gatePassCleaningPDF.add_data_to_pdf(TEMPLATE_PATH + GATEPASS_CLEANING_TEMPLATE_FILENAME, data)
     #workPermitCleaningPDF.add_data_to_pdf(TEMPLATE_PATH + WORK_PERMIT_CLEANING_TEMPLATE_FILENAME, data)
+
+    email = ProcessPdf(FILLED_UP_FORMS, "AIRBNB_Email_" + guestName + "_"+ confirmationCode + ".txt")
+    email.generateEmails(TEMPLATE_PATH + EMAIL_TEMPLATE, data)

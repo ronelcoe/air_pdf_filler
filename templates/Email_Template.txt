@@ -1,0 +1,28 @@
+==================================================================
+Guest Email
+==================================================================
+
+Airbnb Requirements @ AIR Residences checkinDate - checkOutDate
+
+Hi guestName,
+
+Good day. Please see the attached forms that you need to fill up for your upcoming stay in our unit at AIR Residences Makati. 
+
+Once filled up, please send back to me along with the following:
+
+1. Filled up authorization letter with all guest's details
+2. Health Declaration Form (each guest) - create another copy for other guest
+3. (1) Valid Government ID  (each guest)
+4. Vaccination Card / Certificate (each guest)
+
+==================================================================
+Admin Email - Air Admin <air.admin@greenmist.ph>
+==================================================================
+
+AIR_B014467_MI checkinDate - checkOutDate
+
+Hi Admin,
+
+Please accommodate my guests coming in from checkinDate - checkOutDate. 
+
+Attached are the necessary documents for your acknowledgement. 
